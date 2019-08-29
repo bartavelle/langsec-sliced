@@ -80,7 +80,7 @@ insertSlice
   -> Sliced rangetype x
   -> Maybe (Sliced rangetype x)
 insertSlice ir@(Range ilo ihi) e (Sliced lst rng@(Range smin smax))
-  | ilo < smin || ihi > smax = Nothing
+  | ilo < smin || ihi > smax || not (wellFormedRange ir) = Nothing
   | otherwise = fmap (\r -> Sliced r rng) (go lst)
   where
     element = (ir, e)
@@ -107,7 +107,10 @@ allocateSlice
   -> x -- ^ element type to insert
   -> Sliced rangetype x -- ^ current set
   -> Maybe (Sliced rangetype x, Range rangetype)
-allocateSlice maxsize v (Sliced lst bnds@(Range smin smax)) = go smin lst
+allocateSlice maxsize v (Sliced lst bnds@(Range smin smax)) =
+      if maxsize <= 0
+         then Nothing
+         else go smin lst
   where
     go :: rangetype
        -> [(Range rangetype, x)]
