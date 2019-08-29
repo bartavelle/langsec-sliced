@@ -5,6 +5,7 @@ module CSlice where
 import Control.Applicative
 import Data.Maybe
 import Data.Aeson
+import qualified Data.Map.Strict as M
 
 data Range rangetype
   = Range
@@ -173,4 +174,10 @@ deleteSlice rng (Sliced slc bnds) = Sliced (go slc) bnds
           if rng == c
             then xs
             else x:go xs
+
+summarySlice
+  :: (Ord x, Num rangetype)
+  => Sliced rangetype x
+  -> M.Map x rangetype
+summarySlice = M.fromListWith (+) . map (\(Range s e, x) -> (x, 1+e-s)) . ranges
 
