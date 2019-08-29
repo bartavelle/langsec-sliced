@@ -1,8 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 module CSlice where
 
 import Control.Applicative
 import Data.Maybe
+import Data.Aeson
 
 data Range rangetype
   = Range
@@ -10,6 +12,12 @@ data Range rangetype
   , _end   :: !rangetype -- ^ inclusive bound
   }
   deriving (Show, Eq, Ord)
+
+instance FromJSON rangetype => FromJSON (Range rangetype) where
+  parseJSON = withObject "Range" $ \hm -> Range <$> hm .: "s" <*> hm .: "e"
+
+instance ToJSON rangetype => ToJSON (Range rangetype) where
+  toJSON (Range s e) = object ["s" .= s, "e" .= e]
 
 -- | Returns true if start < end
 wellFormedRange
@@ -46,6 +54,14 @@ data Sliced rangetype itemtype
 
 instance Functor (Sliced r) where
   fmap f (Sliced lst bnds) = Sliced [(r, f i) | (r,i) <- lst] bnds
+
+instance (FromJSON rangetype, FromJSON itemtype)
+        => FromJSON (Sliced rangetype itemtype) where
+  parseJSON = withObject "Sliced" $ \hm -> Sliced <$> hm .: "rngs" <*> hm .: "bnds"
+
+instance (ToJSON rangetype, ToJSON itemtype)
+        => ToJSON (Sliced rangetype itemtype) where
+  toJSON (Sliced rngs bnds) = object ["rngs" .= rngs, "bnds" .= bnds]
 
 -- | Creates an empty sliced
 mkSliced
